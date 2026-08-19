@@ -89,7 +89,3 @@ export function compatibleKeys(id: string): Set<string> {
 export function energyDelta(from: number, to: number): number {
   return to - from;
 }
-
-export function bpmCompatible(a: number, b: number, window = 6): boolean {
-  return Math.abs(a - b) <= window || Math.abs(a * 2 - b) <= window || Math.abs(a - b * 2) <= window;
-}
