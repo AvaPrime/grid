@@ -1,0 +1,20 @@
+#!/bin/sh
+# Keep subjects readable. Allow merge/revert/fixup commits through.
+set -eu
+
+msg_file=$1
+subject=$(sed -n '1p' "$msg_file" | tr -d '\r')
+
+case "$subject" in
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+if [ ${#subject} -lt 10 ]; then
+  echo "commit-msg: subject must be at least 10 characters"
+  exit 1
+fi
+
+if printf '%s' "$subject" | grep -q '[.]$'; then
+  echo "commit-msg: do not end the subject with a period"
+  exit 1
+fi

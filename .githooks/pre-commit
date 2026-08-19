@@ -1,0 +1,25 @@
+#!/bin/sh
+# Staged-file lint + format. Also block obvious secrets and oversized blobs.
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+blocked='(\.env($|\.)|id_rsa|id_ed25519|\.pem$|\.p12$)'
+if git diff --cached --name-only --diff-filter=ACM | grep -E "$blocked" >/dev/null; then
+  echo "pre-commit: refusing to commit secret-like files:"
+  git diff --cached --name-only --diff-filter=ACM | grep -E "$blocked"
+  exit 1
+fi
+
+oversized=0
+for file in $(git diff --cached --name-only --diff-filter=ACM); do
+  [ -f "$file" ] || continue
+  size=$(wc -c < "$file")
+  if [ "$size" -gt 2000000 ]; then
+    echo "pre-commit: $file is ${size} bytes (limit 2MB)"
+    oversized=1
+  fi
+done
+[ "$oversized" -eq 0 ]
+
+npx lint-staged

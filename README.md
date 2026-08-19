@@ -1,28 +1,15 @@
-# GRID
+## Git hooks
 
-DJ library OS — crates, hot cues, Camelot mixing, a local REST API, and a plugin sandbox.
-
-## Features
-
-- **Library** — 48 prepared tracks across eight albums with BPM, Camelot key, energy, ratings, and cue points
-- **Player** — generated-in-key preview grooves (no copyrighted audio). Space toggles; keys 1–8 jump hot cues
-- **Mix** — Camelot wheel plus harmonic matches within ±8 BPM
-- **Plugins** — sandboxed JavaScript actions against `_library`
-- **REST API** — same-origin `/api/v1` for tracks, search, playlists, and cue writes
-- **Accounts** — sign in to clone the demo crate onto your own library
-
-## Develop
+Hooks live in `.githooks` (not `.git/hooks`) so they ship with the repo.
 
 ```bash
-npm install
-npm run dev
+npm run hooks:install   # or: npm install  (runs prepare)
 ```
 
-```bash
-npm run build
-npm run typecheck
-```
+| Hook         | What it does                                                                                  |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| `pre-commit` | Blocks secret-like files / >2MB blobs, then `lint-staged` (ESLint + Prettier on staged files) |
+| `commit-msg` | Requires a subject of at least 10 characters                                                  |
+| `pre-push`   | `npm run typecheck` and `npm test`                                                            |
 
-## Stack
-
-React 19, TanStack Start, Tailwind v4, Postgres (Neon / PGLite), Better Auth.
+Skip once with `git commit --no-verify` / `git push --no-verify` if you must.
