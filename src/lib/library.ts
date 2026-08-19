@@ -3,6 +3,14 @@ import { getSql, type Sql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/verify.server";
 import { CATALOG_ALBUMS, PLAYLIST_SEEDS, catalogTracks } from "@/lib/catalog";
 import { buildWaveform } from "@/lib/waveform";
+import {
+  assertCamelot,
+  assertCanonicalDanceability,
+  assertCanonicalEnergy,
+  assertCanonicalRating,
+  matchSmart,
+  validateCuepoints,
+} from "@/lib/domain";
 import type { CuePoint, Playlist, SmartRule, Track } from "@/lib/types";
 
 export const DEMO_USER = "demo";
@@ -231,32 +239,14 @@ async function loadPlaylists(sql: Sql, userId: string, tracks: Track[]): Promise
   });
 }
 
-function matchSmart(t: Track, rules: SmartRule[]): boolean {
-  return rules.every((rule) => {
-    const field = rule.field;
-    const op = rule.op;
-    const value = rule.value;
-    if (field === "energy" || field === "rating" || field === "bpm" || field === "year") {
-      const n = t[field];
-      const v = Number(value);
-      if (op === "gte") return n >= v;
-      if (op === "lte") return n <= v;
-      return n === v;
-    }
-    if (field === "genre") {
-      const s = String(value).toLowerCase();
-      if (op === "contains") return t.genre.toLowerCase().includes(s);
-      return t.genre.toLowerCase() === s;
-    }
-    if (field === "camelot") {
-      if (op === "in" && Array.isArray(value)) return value.includes(t.camelot);
-      return t.camelot === String(value);
-    }
-    if (field === "tag") {
-      return t.tags.includes(String(value));
-    }
-    return true;
-  });
+function applyCanonicalGuards(edits: Record<string, unknown>, duration?: number) {
+  if (typeof edits.energy === "number") assertCanonicalEnergy(edits.energy);
+  if (typeof edits.danceability === "number") assertCanonicalDanceability(edits.danceability);
+  if (typeof edits.rating === "number") assertCanonicalRating(edits.rating);
+  if (typeof edits.camelot === "string") assertCamelot(edits.camelot);
+  if (Array.isArray(edits.cuepoints) && typeof duration === "number") {
+    validateCuepoints(edits.cuepoints as CuePoint[], duration);
+  }
 }
 
 export const loadLibrary = createServerFn({ method: "GET" }).handler(async () => {
@@ -315,6 +305,7 @@ export const updateTrackFn = createServerFn({ method: "POST" })
       edits.play_count = edits.playCount;
       delete edits.playCount;
     }
+    applyCanonicalGuards(edits);
     const sets: string[] = [];
     const values: unknown[] = [];
     let i = 1;
@@ -334,7 +325,13 @@ export const updateTrackFn = createServerFn({ method: "POST" })
   });
 
 export const createPlaylistFn = createServerFn({ method: "POST" })
-  .validator((input: { name: string; type: "playlist" | "folder" | "smartlist"; parentId?: number | null }) => input)
+  .validator(
+    (input: {
+      name: string;
+      type: "playlist" | "folder" | "smartlist";
+      parentId?: number | null;
+    }) => input,
+  )
   .handler(async ({ data }) => {
     const sql = await getSql();
     const userId = await ownerId();
@@ -397,10 +394,38 @@ export const applyCueTemplateFn = createServerFn({ method: "POST" })
       const bar = (60 / t.bpm) * 4;
       const cues: CuePoint[] = [
         { position: 0, name: "Intro", type: "1", startTime: 0.2, endTime: null, color: "#c4c9ce" },
-        { position: 1, name: "Drop", type: "1", startTime: bar * 16, endTime: null, color: "#8fa3b0" },
-        { position: 2, name: "Break", type: "1", startTime: bar * 48, endTime: null, color: "#d7dbe0" },
-        { position: 3, name: "Drop 2", type: "1", startTime: bar * 64, endTime: null, color: "#6f8290" },
-        { position: 4, name: "Outro", type: "1", startTime: Math.max(t.duration - bar * 8, bar * 80), endTime: null, color: "#b7c0c6" },
+        {
+          position: 1,
+          name: "Drop",
+          type: "1",
+          startTime: bar * 16,
+          endTime: null,
+          color: "#8fa3b0",
+        },
+        {
+          position: 2,
+          name: "Break",
+          type: "1",
+          startTime: bar * 48,
+          endTime: null,
+          color: "#d7dbe0",
+        },
+        {
+          position: 3,
+          name: "Drop 2",
+          type: "1",
+          startTime: bar * 64,
+          endTime: null,
+          color: "#6f8290",
+        },
+        {
+          position: 4,
+          name: "Outro",
+          type: "1",
+          startTime: Math.max(t.duration - bar * 8, bar * 80),
+          endTime: null,
+          color: "#b7c0c6",
+        },
       ];
       await sql`
         update tracks set cuepoints_json = ${JSON.stringify(cues)}

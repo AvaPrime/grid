@@ -1,8 +1,28 @@
 export type CamelotId =
-  | "1A" | "2A" | "3A" | "4A" | "5A" | "6A"
-  | "7A" | "8A" | "9A" | "10A" | "11A" | "12A"
-  | "1B" | "2B" | "3B" | "4B" | "5B" | "6B"
-  | "7B" | "8B" | "9B" | "10B" | "11B" | "12B";
+  | "1A"
+  | "2A"
+  | "3A"
+  | "4A"
+  | "5A"
+  | "6A"
+  | "7A"
+  | "8A"
+  | "9A"
+  | "10A"
+  | "11A"
+  | "12A"
+  | "1B"
+  | "2B"
+  | "3B"
+  | "4B"
+  | "5B"
+  | "6B"
+  | "7B"
+  | "8B"
+  | "9B"
+  | "10B"
+  | "11B"
+  | "12B";
 
 export type CamelotEntry = {
   id: CamelotId;
@@ -43,14 +63,32 @@ const MAJOR: { musical: string; hz: number }[] = [
 ];
 
 const INNER = [
-  "#9aa7b2", "#8ea3b5", "#829eb8", "#7898b4",
-  "#6f91ad", "#6a889f", "#748a96", "#7d9198",
-  "#88959a", "#8e9aa0", "#96a2a8", "#a0aab0",
+  "#9aa7b2",
+  "#8ea3b5",
+  "#829eb8",
+  "#7898b4",
+  "#6f91ad",
+  "#6a889f",
+  "#748a96",
+  "#7d9198",
+  "#88959a",
+  "#8e9aa0",
+  "#96a2a8",
+  "#a0aab0",
 ];
 const OUTER = [
-  "#c5ccd2", "#b7c4ce", "#a8bbca", "#9ab3c4",
-  "#8ba9bb", "#7e9cad", "#7a929e", "#84969e",
-  "#8f9ca3", "#99a4aa", "#a4aeb4", "#b0b8bd",
+  "#c5ccd2",
+  "#b7c4ce",
+  "#a8bbca",
+  "#9ab3c4",
+  "#8ba9bb",
+  "#7e9cad",
+  "#7a929e",
+  "#84969e",
+  "#8f9ca3",
+  "#99a4aa",
+  "#a4aeb4",
+  "#b0b8bd",
 ];
 
 export const CAMELOT: CamelotEntry[] = [
@@ -88,8 +126,4 @@ export function compatibleKeys(id: string): Set<string> {
 
 export function energyDelta(from: number, to: number): number {
   return to - from;
-}
-
-export function bpmCompatible(a: number, b: number, window = 6): boolean {
-  return Math.abs(a - b) <= window || Math.abs(a * 2 - b) <= window || Math.abs(a - b * 2) <= window;
 }
